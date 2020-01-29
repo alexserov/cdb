@@ -1,0 +1,5 @@
+LIBRARY	dbgextensions
+EXPORTS
+	DebugExtensionInitialize	@1
+	executescript	@2
+
