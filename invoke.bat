@@ -37,6 +37,8 @@ goto regcleanup
 echo. .loadby sos clr; .symfix; !threads; !sym noisy; .logopen "%cd%\temp\callstack.txt"; !EEStack -EE; .logclose; qd>temp/dbg.script
 "%cd%\%architecture%\cdb.exe" -z "%filename%" -c "$<%cd%\temp\dbg.script" >nul
 
+powershell .\reduceCallstack.ps1 .\temp\callstack.txt
+
 type "%cd%\temp\callstack.txt"
 
 :regcleanup
