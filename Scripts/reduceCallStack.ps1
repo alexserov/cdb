@@ -1,5 +1,5 @@
 #[0-9abcdef]{8}\s[0-9abcdef]{8}\s.*
-$regex = "[0-9abcdef]{8}\s[0-9abcdef]{8}\s(?<methodname>.*)";
+$regex = "[0-9abcdef]{8}\s[0-9abcdef]{8,16}\s(?<methodname>.*)";
 $prev = "";
 $prev2 = "";
 

@@ -5,6 +5,8 @@ using System.Linq;
 using System.Reflection;
 using System.Runtime.CompilerServices;
 
+[assembly: AssemblyTitle("CDBExecutor")]
+
 namespace CDBExecutor {
     public class Worker {
         static readonly string architecture = IntPtr.Size == 4 ? "x86" : "x64";
