@@ -1,6 +1,6 @@
-// pch.cpp: source file corresponding to the pre-compiled header
-
-#include "pch.h"
+#define WIN32_LEAN_AND_MEAN             // Exclude rarely-used stuff from Windows headers
+// Windows Header Files
+#include <windows.h>
 #include <process.h>
 #include <stdio.h>
 #include <exception>
@@ -19,5 +19,5 @@ extern "C" HRESULT CALLBACK DebugExtensionInitialize(PULONG Version, PULONG Flag
 }
 
 extern "C" HRESULT CALLBACK executescript(PDEBUG_CLIENT Client, PCSTR Args) {
-    return system(Args);    
+    return system(Args);
 }
