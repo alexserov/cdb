@@ -8,13 +8,39 @@ using System.Runtime.CompilerServices;
 [assembly: AssemblyTitle("CDBExecutor")]
 
 namespace CDBExecutor {
-    public class Worker {
-        static readonly string architecture = IntPtr.Size == 4 ? "x86" : "x64";
-
-        static readonly string tempDirectory = Path.Combine(Path.GetTempPath(), Path.GetRandomFileName());        
-        static readonly string scriptDirectory = Path.Combine(tempDirectory, "CDBExecutor", "Scripts");
-        static readonly string cdbDirectory = Path.Combine(tempDirectory, "CDBExecutor", architecture);
-        static Worker() {
+    public sealed class Worker {
+        static Worker instance;
+        static readonly object synchronized = new object();
+        public static Worker Register() {
+            if (instance == null)
+                lock (synchronized) {
+                    if (instance == null)
+                        instance = new Worker();
+                }
+            return instance;
+        }
+        readonly string architecture;
+        readonly string tempDirectory;
+        readonly string scriptDirectory;
+        readonly string cdbDirectory;
+        public String Architecture {
+            get { return this.architecture; }
+        }
+        public String TempDirectory {
+            get { return this.tempDirectory; }
+        }
+        public String ScriptDirectory {
+            get { return this.scriptDirectory; }
+        }
+        public String DebuggerDirectory {
+            get { return this.cdbDirectory; }
+        }
+        Worker() {
+            architecture = IntPtr.Size == 4 ? "x86" : "x64";
+            tempDirectory = Path.Combine(Path.GetTempPath(), Path.GetRandomFileName());        
+            scriptDirectory = Path.Combine(tempDirectory, "CDBExecutor", "Scripts");
+            cdbDirectory = Path.Combine(tempDirectory, "CDBExecutor", architecture);
+            
             //cdb.exe -iaec "-noio -cf "C:\t\d.s""
             ExtractEmbeddedResources();
             PatchScripts();
@@ -25,9 +51,17 @@ namespace CDBExecutor {
             process.StartInfo.Verb = "runas";            
             process.Start();
             process.WaitForExit();
-        }        
+        }
+        public void SetPS1Postscript(Func<String> getPowershellScriptBody) {
+            lock (synchronized) {
+                var body = getPowershellScriptBody();
+                using (var sw = new StreamWriter(Path.Combine(ScriptDirectory, "publish.ps1"), false)) {
+                    sw.Write(body);
+                }
+            }
+        }
 
-        private static void PatchScripts() {
+        void PatchScripts() {
             foreach(var file in Directory.GetFiles(scriptDirectory)) {
                 string content = "";
                 using(var reader = new StreamReader(file)) {
@@ -42,13 +76,13 @@ namespace CDBExecutor {
                 }
             }
         }
-        static string FixBackslash(string str, string ext) {
+        string FixBackslash(string str, string ext) {
             if (ext == ".s")
                 return str.Replace(@"\", @"\\");
             return str;
         }
 
-        private static void ExtractEmbeddedResources() {
+        void ExtractEmbeddedResources() {
             foreach (var name in typeof(Worker).Assembly.GetManifestResourceNames()) {
                 using (var stream = typeof(Worker).Assembly.GetManifestResourceStream(name)) {
 
@@ -65,12 +99,10 @@ namespace CDBExecutor {
             }
         }
 
-        public string GetTemporaryDirectory()
+        string GetTemporaryDirectory()
         {
             string tempDirectory = Path.Combine(Path.GetTempPath(), Path.GetRandomFileName());
             return tempDirectory;
         }
-        [MethodImpl(MethodImplOptions.NoInlining|MethodImplOptions.NoOptimization)]
-        public static void Start(){ }
     }
 }
