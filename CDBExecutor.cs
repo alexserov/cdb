@@ -4,6 +4,7 @@ using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
 
 [assembly: AssemblyTitle("CDBExecutor")]
 
@@ -41,6 +42,8 @@ namespace CDBExecutor {
             scriptDirectory = Path.Combine(tempDirectory, "CDBExecutor", "Scripts");
             cdbDirectory = Path.Combine(tempDirectory, "CDBExecutor", architecture);
             
+            SetErrorMode(ErrorModes.SYSTEM_DEFAULT);
+            
             //cdb.exe -iaec "-noio -cf "C:\t\d.s""
             ExtractEmbeddedResources();
             PatchScripts();
@@ -52,6 +55,16 @@ namespace CDBExecutor {
             process.Start();
             process.WaitForExit();
         }
+        [Flags]
+        public enum ErrorModes : uint {
+            SYSTEM_DEFAULT = 0x0,
+            SEM_FAILCRITICALERRORS = 0x0001,
+            SEM_NOALIGNMENTFAULTEXCEPT = 0x0004,
+            SEM_NOGPFAULTERRORBOX = 0x0002,
+            SEM_NOOPENFILEERRORBOX = 0x8000
+        }
+        [DllImport("kernel32.dll")]
+        static extern ErrorModes SetErrorMode(ErrorModes uMode);
         public void SetPS1Postscript(Func<String> getPowershellScriptBody) {
             lock (synchronized) {
                 var body = getPowershellScriptBody();

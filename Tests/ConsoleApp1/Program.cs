@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
@@ -9,7 +10,18 @@ using CDBExecutor;
 
 namespace ConsoleApp1 {
     class Program {
+        [Flags]
+        public enum ErrorModes : uint {
+            SYSTEM_DEFAULT = 0x0,
+            SEM_FAILCRITICALERRORS = 0x0001,
+            SEM_NOALIGNMENTFAULTEXCEPT = 0x0004,
+            SEM_NOGPFAULTERRORBOX = 0x0002,
+            SEM_NOOPENFILEERRORBOX = 0x8000
+        }
+        [DllImport("kernel32.dll")]
+        static extern ErrorModes SetErrorMode(ErrorModes uMode);
         static void Main(string[] args) {
+             SetErrorMode(ErrorModes.SEM_NOGPFAULTERRORBOX);
             if (args.Length > 0) {
                 Thread.Sleep(TimeSpan.FromSeconds(5));
                 M1();
