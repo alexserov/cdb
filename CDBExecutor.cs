@@ -5,6 +5,7 @@ using System.Linq;
 using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
+using System.Text;
 
 [assembly: AssemblyTitle("CDBExecutor")]
 
@@ -24,6 +25,7 @@ namespace CDBExecutor {
         readonly string tempDirectory;
         readonly string scriptDirectory;
         readonly string cdbDirectory;
+        bool managedOnly = true;
         public String Architecture {
             get { return this.architecture; }
         }
@@ -35,6 +37,19 @@ namespace CDBExecutor {
         }
         public String DebuggerDirectory {
             get { return this.cdbDirectory; }
+        }
+        public bool ManagedOnly {
+            get { return this.managedOnly; }
+            set {
+                if (this.managedOnly == value)
+                    return;
+                this.managedOnly = value;
+                UpdateDebuggerScript((i, s) => {
+                    if (!s.StartsWith("!EEStack"))
+                        return s;
+                    return this.managedOnly ? "!EEStack -EE" : "!EEStack";
+                });
+            }
         }
         Worker() {
             architecture = IntPtr.Size == 4 ? "x86" : "x64";
@@ -73,6 +88,18 @@ namespace CDBExecutor {
                 }
             }
         }
+        void UpdateDebuggerScript(Func<int, string, string> updateLine) {
+            lock (synchronized) {
+                StringBuilder dsBuilder = new StringBuilder();
+                using (var sr = new StreamReader(Path.Combine(ScriptDirectory, "d.s"))) {
+                    for (int i = 0; sr.Peek() != -1; i++) {
+                        var line = sr.ReadLine();
+                        dsBuilder.AppendLine(updateLine(i, line));
+                    }
+                }
+            }
+        }
+        
 
         void PatchScripts() {
             foreach(var file in Directory.GetFiles(scriptDirectory)) {
