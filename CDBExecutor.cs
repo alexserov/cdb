@@ -91,11 +91,16 @@ namespace CDBExecutor {
         void UpdateDebuggerScript(Func<int, string, string> updateLine) {
             lock (synchronized) {
                 StringBuilder dsBuilder = new StringBuilder();
-                using (var sr = new StreamReader(Path.Combine(ScriptDirectory, "d.s"))) {
+                var filename = Path.Combine(ScriptDirectory, "d.s");
+                using (var sr = new StreamReader(filename)) {
                     for (int i = 0; sr.Peek() != -1; i++) {
                         var line = sr.ReadLine();
                         dsBuilder.AppendLine(updateLine(i, line));
                     }
+                }
+
+                using (var sw = new StreamWriter(filename, false)) {
+                    sw.Write(dsBuilder.ToString());
                 }
             }
         }
